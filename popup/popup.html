@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nehboro</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+    :root {
+      --bg: #0b0e17; --surface: #111827; --surface2: #1a2236; --border: #1e2a42;
+      --cyan: #00d4ff; --cyan-dim: #0a3a4a; --green: #00ff88; --green-dim: #0a2e1e;
+      --red: #ff3b5c; --red-dim: #2a0e16; --amber: #ffb020; --amber-dim: #2a1e08;
+      --text: #e2e8f0; --muted: #64748b; --dim: #334155;
+      --mono: 'JetBrains Mono', monospace; --sans: 'DM Sans', system-ui, sans-serif;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { width:420px; min-height:300px; background:var(--bg); color:var(--text);
+           font-family:var(--sans); font-size:13px; overflow-x:hidden; }
+
+    /* ── Scanline texture ────────────────────────────────── */
+    body::before {
+      content:''; position:fixed; inset:0; pointer-events:none; z-index:9999; opacity:.03;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,212,255,.3) 2px, rgba(0,212,255,.3) 3px);
+    }
+
+    /* ── Header ──────────────────────────────────────────── */
+    .header {
+      background: linear-gradient(135deg, #0f1629 0%, #162033 100%);
+      border-bottom: 1px solid var(--border); padding: 14px 18px;
+      position: relative; overflow: hidden;
+    }
+    .header::after {
+      content:''; position:absolute; top:0; right:0; width:120px; height:100%;
+      background: radial-gradient(ellipse at right, rgba(0,212,255,.06), transparent 70%);
+      pointer-events:none;
+    }
+    .header-top { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+    .logo-mark {
+      width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+      background: linear-gradient(135deg, var(--cyan-dim), #0b1a2e);
+      border: 1px solid rgba(0,212,255,.2); overflow:hidden;
+    }
+    .logo-mark img { width:30px; height:30px; object-fit:contain; }
+    .brand { flex:1; }
+    .brand-name { font-weight:700; font-size:16px; letter-spacing:.5px; color:#fff; }
+    .brand-tag { font-size:10px; color:var(--cyan); font-weight:600; letter-spacing:.8px; text-transform:uppercase; margin-top:1px; }
+    .gh-link { color:var(--muted); text-decoration:none;
+               padding:5px; border:1px solid var(--border); border-radius:6px; display:flex; align-items:center; }
+    .gh-link:hover { color:var(--cyan); border-color:var(--cyan-dim); }
+
+    /* Engine badges */
+    .engines { display:flex; gap:8px; }
+    .engine-badge {
+      flex:1; display:flex; align-items:center; gap:6px; padding:6px 10px;
+      background: var(--surface); border:1px solid var(--border); border-radius:6px;
+      font-size:10px; font-weight:600; letter-spacing:.3px;
+    }
+    .engine-badge .dot {
+      width:6px; height:6px; border-radius:50%; flex-shrink:0;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    .engine-badge .dot.active { background:var(--green); box-shadow:0 0 6px rgba(0,255,136,.4); }
+    .engine-badge .label { color:var(--muted); }
+    .engine-badge .value { color:var(--text); margin-left:auto; font-family:var(--mono); font-size:10px; }
+    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+    /* ── Tabs ─────────────────────────────────────────────── */
+    .tabs { display:flex; background:var(--surface); border-bottom:1px solid var(--border); padding:0 4px; }
+    .tab {
+      flex:1; padding:9px 4px 8px; border:none; background:transparent; color:var(--muted);
+      cursor:pointer; font-size:10px; font-weight:600; font-family:var(--sans);
+      border-bottom:2px solid transparent; transition:all .2s; letter-spacing:.3px;
+      text-transform:uppercase;
+    }
+    .tab:hover { color:var(--text); }
+    .tab.active { color:var(--cyan); border-bottom-color:var(--cyan); }
+
+    .tab-content { display:none; padding:14px 18px; }
+    .tab-content.active { display:block; }
+
+    /* ── Status tab ───────────────────────────────────────── */
+    .status-card {
+      background: var(--surface); border:1px solid var(--border); border-radius:10px;
+      padding:14px; margin-bottom:10px; position:relative; overflow:hidden;
+    }
+    .status-card::before {
+      content:''; position:absolute; top:0; left:0; width:3px; height:100%; border-radius:3px 0 0 3px;
+    }
+    .status-card.safe::before { background:var(--green); }
+    .status-card.warn::before { background:var(--amber); }
+    .status-card.danger::before { background:var(--red); }
+    .status-row { display:flex; align-items:center; gap:12px; }
+    .status-icon { font-size:24px; }
+    .status-label { font-weight:700; font-size:14px; }
+    .status-host { font-size:11px; color:var(--muted); font-family:var(--mono); margin-top:1px; }
+    .status-score {
+      margin-left:auto; font-family:var(--mono); font-weight:700; font-size:13px;
+      padding:3px 10px; border-radius:6px;
+    }
+    .status-score.danger { background:var(--red-dim); color:var(--red); }
+    .status-score.warn   { background:var(--amber-dim); color:var(--amber); }
+    .status-score.safe   { background:var(--green-dim); color:var(--green); }
+
+    /* Engine status cards */
+    .engine-cards { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+    .engine-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:8px;
+      padding:10px 12px; position:relative;
+    }
+    .engine-card-title {
+      font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.8px;
+      color:var(--muted); margin-bottom:6px; display:flex; align-items:center; gap:4px;
+    }
+    .engine-card-title .icon { font-size:11px; }
+    .engine-card-value { font-family:var(--mono); font-size:18px; font-weight:700; }
+    .engine-card-value.safe { color:var(--green); }
+    .engine-card-value.warn { color:var(--amber); }
+    .engine-card-value.danger { color:var(--red); }
+    .engine-card-sub { font-size:10px; color:var(--muted); margin-top:2px; }
+
+    .finding {
+      background:var(--surface); border:1px solid var(--border); border-radius:6px;
+      padding:8px 10px; margin-bottom:4px; border-left:3px solid var(--red);
+    }
+    .finding.warn { border-left-color:var(--amber); }
+    .finding-category {
+      font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.5px;
+      color:var(--red); font-family:var(--mono);
+    }
+    .finding.warn .finding-category { color:var(--amber); }
+    .finding-desc { font-size:12px; margin:2px 0; color:var(--text); }
+    .finding-evidence {
+      font-size:10px; color:var(--dim); font-family:var(--mono);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .finding-score { font-family:var(--mono); font-size:10px; font-weight:700; float:right; }
+
+    /* ── Section titles ───────────────────────────────────── */
+    .section-title {
+      font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1px;
+      color:var(--muted); margin:14px 0 6px; display:flex; align-items:center; gap:6px;
+    }
+    .section-title:first-child { margin-top:0; }
+    .section-title .line { flex:1; height:1px; background:var(--border); }
+
+    /* ── Feeds tab ────────────────────────────────────────── */
+    .feed-item {
+      background:var(--surface); border:1px solid var(--border); border-radius:6px;
+      padding:8px 10px; margin-bottom:4px; display:flex; align-items:center; gap:8px;
+    }
+    .feed-info { flex:1; overflow:hidden; }
+    .feed-name { font-size:12px; font-weight:600; }
+    .feed-url { font-size:10px; color:var(--muted); font-family:var(--mono);
+                white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:220px; }
+    .feed-type {
+      font-size:9px; background:var(--cyan-dim); color:var(--cyan); padding:2px 6px;
+      border-radius:4px; font-weight:600; font-family:var(--mono); white-space:nowrap;
+      text-transform:uppercase; letter-spacing:.3px;
+    }
+    .btn-remove {
+      background:transparent; border:1px solid var(--red-dim); color:var(--red);
+      border-radius:4px; padding:2px 7px; cursor:pointer; font-size:10px; font-family:var(--mono);
+    }
+    .btn-remove:hover { background:var(--red-dim); }
+
+    /* ── Stats ────────────────────────────────────────────── */
+    .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+    .stat-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:8px;
+      padding:12px; text-align:center; position:relative;
+    }
+    .stat-value { font-size:24px; font-weight:700; color:var(--cyan); font-family:var(--mono); }
+    .stat-label { font-size:9px; color:var(--muted); margin-top:3px; text-transform:uppercase; letter-spacing:.5px; }
+
+    /* ── Forms ────────────────────────────────────────────── */
+    .form-group { margin-bottom:9px; }
+    .form-label { font-size:10px; color:var(--muted); margin-bottom:3px; display:block; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+    .form-input, .form-select {
+      width:100%; background:var(--surface); border:1px solid var(--border);
+      border-radius:6px; color:var(--text); padding:7px 10px; font-size:12px;
+      outline:none; font-family:var(--sans); transition:border-color .2s;
+    }
+    .form-input:focus, .form-select:focus { border-color:var(--cyan); box-shadow:0 0 0 2px rgba(0,212,255,.1); }
+
+    /* ── Buttons ──────────────────────────────────────────── */
+    .btn {
+      border:none; border-radius:6px; padding:8px 14px; cursor:pointer;
+      font-size:11px; font-weight:700; transition:all .2s; font-family:var(--sans);
+      letter-spacing:.3px; text-transform:uppercase;
+    }
+    .btn:disabled { opacity:.4; cursor:default; }
+    .btn:hover:not(:disabled) { transform:translateY(-1px); }
+    .btn-primary { background:linear-gradient(135deg,#0095cc,var(--cyan)); color:#000; box-shadow:0 2px 8px rgba(0,212,255,.2); }
+    .btn-primary:hover { box-shadow:0 4px 12px rgba(0,212,255,.3); }
+    .btn-danger { background:linear-gradient(135deg,#cc2040,var(--red)); color:#fff; }
+    .btn-success { background:linear-gradient(135deg,#00aa55,var(--green)); color:#000; }
+    .btn-secondary { background:var(--surface2); color:var(--muted); border:1px solid var(--border); }
+    .btn-secondary:hover { color:var(--text); border-color:var(--dim); }
+    .action-row { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+
+    .badge-green { background:var(--green-dim); color:var(--green); border-radius:10px; padding:2px 8px; font-size:10px; font-weight:700; font-family:var(--mono); }
+
+    .info-box { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:10px 12px; font-size:11px; color:var(--muted); line-height:1.5; }
+    .info-box strong { color:var(--text); }
+
+    .status-msg { font-size:10px; margin-top:5px; min-height:16px; color:var(--green); font-family:var(--mono); }
+
+    /* ── Scores tab ───────────────────────────────────────── */
+    .scores-search {
+      width:100%; background:var(--surface); border:1px solid var(--border);
+      border-radius:6px; color:var(--text); padding:7px 10px; font-size:12px;
+      outline:none; margin-bottom:8px; font-family:var(--sans); transition:border-color .2s;
+    }
+    .scores-search:focus { border-color:var(--cyan); box-shadow:0 0 0 2px rgba(0,212,255,.1); }
+    .scores-count { font-size:10px; color:var(--muted); margin-bottom:8px; font-family:var(--mono); }
+    .score-list { max-height:350px; overflow-y:auto; }
+    .score-item {
+      background:var(--surface); border:1px solid var(--border); border-radius:6px;
+      padding:8px 10px; margin-bottom:4px;
+    }
+    .score-header { display:flex; align-items:center; gap:6px; margin-bottom:3px; }
+    .score-name { font-size:12px; font-weight:600; flex:1; }
+    .score-input {
+      width:52px; background:var(--bg); border:1px solid var(--border);
+      border-radius:4px; color:var(--text); padding:3px 6px; font-size:12px;
+      text-align:center; font-family:var(--mono);
+    }
+    .score-input:focus { border-color:var(--cyan); outline:none; }
+    .score-input.modified { border-color:var(--amber); color:var(--amber); }
+    .score-desc { font-size:10px; color:var(--muted); }
+    .score-tags { display:flex; gap:4px; margin-top:3px; flex-wrap:wrap; }
+    .score-tag { font-size:8px; background:var(--surface2); padding:1px 5px; border-radius:3px; color:var(--dim); font-family:var(--mono); text-transform:uppercase; }
+    .score-tag.critical { color:var(--red); border:1px solid var(--red-dim); }
+    .score-tag.combo { color:var(--amber); border:1px solid var(--amber-dim); }
+    .scores-actions { display:flex; gap:8px; margin-top:8px; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width:4px; }
+    ::-webkit-scrollbar-track { background:var(--bg); }
+    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+    ::-webkit-scrollbar-thumb:hover { background:var(--dim); }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ──────────────────────────────────────────── -->
+<div class="header">
+  <div class="header-top">
+    <div class="logo-mark"><img src="../icons/icon128.png" alt="Nehboro"></div>
+    <div class="brand">
+      <div class="brand-name">Nehboro</div>
+      <div class="brand-tag">Triple-Engine Threat Protection</div>
+    </div>
+    <a class="gh-link" href="https://github.com/Nehboro/nehboro.github.io" target="_blank" title="View source on GitHub">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+    </a>
+  </div>
+  <div class="engines">
+    <div class="engine-badge">
+      <span class="dot active"></span>
+      <span class="label">Static IOC</span>
+      <span class="value" id="engine-ioc-count">-</span>
+    </div>
+    <div class="engine-badge">
+      <span class="dot active"></span>
+      <span class="label">Dynamic</span>
+      <span class="value" id="engine-det-count">94</span>
+    </div>
+    <div class="engine-badge" id="engine-ai-badge">
+      <span class="dot" id="engine-ai-dot"></span>
+      <span class="label">AI</span>
+      <span class="value" id="engine-ai-status">OFF</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── TABS ────────────────────────────────────────────── -->
+<div class="tabs">
+  <button class="tab active" data-tab="status">Shield</button>
+  <button class="tab" data-tab="feeds">IOC Feeds</button>
+  <button class="tab" data-tab="scores">Dynamic</button>
+  <button class="tab" data-tab="settings">Config</button>
+</div>
+
+<!-- ── STATUS ──────────────────────────────────────────── -->
+<div class="tab-content active" id="tab-status">
+  <div id="status-content">
+    <div style="color:var(--muted);font-size:12px;padding:20px 0;text-align:center;font-family:var(--mono);">Scanning...</div>
+  </div>
+
+  <div class="section-title" style="margin-top:12px;">Protection summary <span class="line"></span></div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-value" id="stat-blocked">0</div><div class="stat-label">Blocked</div></div>
+    <div class="stat-card"><div class="stat-value" id="stat-warned">0</div><div class="stat-label">Warned</div></div>
+    <div class="stat-card"><div class="stat-value" id="stat-reported">0</div><div class="stat-label">Reported</div></div>
+    <div class="stat-card"><div class="stat-value" id="stat-iocs">0</div><div class="stat-label">IOCs loaded</div></div>
+  </div>
+
+  <div id="ai-result-section" style="display:none;"></div>
+
+  <div class="action-row">
+    <button class="btn btn-primary" id="btn-manual-scan" style="flex:1;">⟳ Scan</button>
+    <button class="btn btn-primary" id="btn-ai-scan" style="flex:1;background:linear-gradient(135deg,#6c3ec1,#9b59b6);box-shadow:0 2px 8px rgba(155,89,182,.2);display:none;">🤖 Scan with AI</button>
+  </div>
+  <div class="status-msg" id="scan-msg"></div>
+</div>
+
+<!-- ── IOC FEEDS ───────────────────────────────────────── -->
+<div class="tab-content" id="tab-feeds">
+  <div class="section-title"><span class="icon">⚡</span> Static IOC Engine <span class="line"></span></div>
+  <div class="info-box" style="margin-bottom:10px;">
+    Blocks known-bad domains, URLs, IPs, and ports <strong>before page load</strong> using community-maintained threat feeds.
+    Matched IOCs are blocked instantly via declarativeNetRequest rules.
+  </div>
+
+  <div class="section-title">Default feeds <span class="line"></span></div>
+  <div id="default-feeds-list"></div>
+
+  <div class="section-title" style="margin-top:14px;">Custom feeds <span class="line"></span></div>
+  <div id="custom-feeds-list"></div>
+
+  <div class="section-title" style="margin-top:14px;">Add feed <span class="line"></span></div>
+  <div class="form-group">
+    <label class="form-label">Feed name</label>
+    <input class="form-input" id="feed-name" type="text" placeholder="My extra blocklist">
+  </div>
+  <div class="form-group">
+    <label class="form-label">Raw URL (.txt / .csv / .json)</label>
+    <input class="form-input" id="feed-url" type="url" placeholder="https://raw.githubusercontent.com/...">
+  </div>
+  <div class="form-group">
+    <label class="form-label">IOC type</label>
+    <select class="form-select" id="feed-type">
+      <option value="domains">Domains</option>
+      <option value="urls">URLs</option>
+      <option value="ips">IP addresses / CIDR</option>
+      <option value="ports">Ports / Port ranges</option>
+    </select>
+  </div>
+  <div class="action-row">
+    <button class="btn btn-primary" id="btn-add-feed">+ Add Feed</button>
+    <button class="btn btn-secondary" id="btn-refresh-feeds">⟳ Refresh Now</button>
+  </div>
+  <div class="status-msg" id="feed-status-msg"></div>
+
+  <div class="section-title" style="margin-top:14px;">Feed coverage <span class="line"></span></div>
+  <div id="feed-coverage" style="color:var(--muted);font-size:12px;">Loading...</div>
+</div>
+
+<!-- ── DYNAMIC DETECTION / SCORES ──────────────────────── -->
+<div class="tab-content" id="tab-scores">
+  <div class="section-title"><span class="icon">🔬</span> Dynamic Analysis Engine <span class="line"></span></div>
+  <div class="info-box" style="margin-bottom:10px;">
+    Scans every page <strong>after load</strong> using 94+ heuristic detections: ClickFix sequences, PowerShell payloads,
+    fake CAPTCHAs, clipboard hijacks, credential harvesting, lookalike domains, visual brand impersonation,
+    <strong>tech support scams</strong> (fake errors, dialog spam, phone scams, fake OS UI, data theft scare),
+    <strong>multilingual detection</strong> (EN/FR/ES/DE/IT), Browser-in-Browser attacks, formjacking, and more.
+    Adjust individual detection scores below.
+  </div>
+
+  <input class="scores-search" id="scores-search" type="text" placeholder="Search detections...">
+  <div class="scores-count" id="scores-count">Loading detections...</div>
+  <div class="score-list" id="score-list"></div>
+  <div class="scores-actions">
+    <button class="btn btn-primary" id="btn-save-scores" style="flex:1;">Save Scores</button>
+    <button class="btn btn-secondary" id="btn-reset-scores">Reset All</button>
+  </div>
+  <div class="status-msg" id="scores-msg"></div>
+</div>
+
+<!-- ── CONFIG / SETTINGS ───────────────────────────────── -->
+<div class="tab-content" id="tab-settings">
+  <div class="section-title"><span class="icon">🤖</span> Claude AI Analysis <span class="line"></span></div>
+  <div class="info-box" style="margin-bottom:10px;">
+    Optional third engine powered by <strong>Anthropic Claude</strong>. When configured, a "Scan with AI" button
+    appears on the Shield tab. Sends page metadata (URL, title, forms, scripts) to Claude for threat analysis.
+    <strong>No raw HTML or user data is sent.</strong>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Anthropic API Key</label>
+    <input class="form-input" id="ai-api-key" type="password" placeholder="sk-ant-..." style="font-family:var(--mono);font-size:11px;">
+  </div>
+  <div class="form-group">
+    <label class="form-label">Model</label>
+    <select class="form-select" id="ai-model" style="font-family:var(--mono);font-size:11px;">
+      <option value="claude-sonnet-4-20250514">Claude Sonnet 4 (default)</option>
+      <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (fast/cheap)</option>
+      <option value="claude-opus-4-6">Claude Opus 4.6 (best)</option>
+      <option value="custom">Custom model...</option>
+    </select>
+    <input class="form-input" id="ai-model-custom" type="text" placeholder="e.g. claude-sonnet-4-20250514" style="font-family:var(--mono);font-size:11px;margin-top:4px;display:none;">
+  </div>
+  <div class="action-row">
+    <button class="btn btn-primary" id="btn-save-ai">Save Claude API Key</button>
+    <button class="btn btn-secondary" id="btn-clear-ai">Clear</button>
+  </div>
+  <div class="status-msg" id="ai-config-msg"></div>
+
+  <div class="section-title" style="margin-top:16px;">Thresholds <span class="line"></span></div>
+  <div class="form-group">
+    <label class="form-label">Warning threshold</label>
+    <input class="form-input" id="threshold-warn" type="number" min="0" max="200" value="45">
+  </div>
+  <div class="form-group">
+    <label class="form-label">Block threshold</label>
+    <input class="form-input" id="threshold-block" type="number" min="0" max="200" value="79">
+  </div>
+  <div class="form-group" style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+    <input type="checkbox" id="toggle-notifications" checked style="accent-color:var(--cyan);">
+    <label for="toggle-notifications" style="font-size:12px;cursor:pointer;">Show warning banners</label>
+  </div>
+  <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+    <input type="checkbox" id="toggle-auto-report" checked style="accent-color:var(--cyan);">
+    <label for="toggle-auto-report" style="font-size:12px;cursor:pointer;">Auto-report blocked pages</label>
+  </div>
+  <div class="action-row">
+    <button class="btn btn-primary" id="btn-save-thresholds">Save</button>
+  </div>
+  <div class="status-msg" id="threshold-msg"></div>
+
+  <div class="section-title" style="margin-top:16px;"><span class="icon">🔇</span> Silent Mode <span class="line"></span></div>
+  <div class="info-box" style="margin-bottom:10px;">
+    <strong>For non-technical users.</strong> When enabled, Nehboro protects silently in the background
+    with no popups, banners, or warning pages. Dangerous pages are quietly closed and replaced
+    with a blank tab. Perfect for setting up on a family member's computer - they stay protected
+    without needing to understand security alerts.
+  </div>
+  <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+    <input type="checkbox" id="toggle-silent-mode" style="accent-color:var(--cyan);width:18px;height:18px;">
+    <label for="toggle-silent-mode" style="font-size:13px;cursor:pointer;font-weight:600;color:var(--cyan);">Enable Silent Mode</label>
+  </div>
+  <div id="silent-mode-status" style="font-size:11px;color:var(--muted);margin-top:4px;padding-left:28px;display:none;">
+    Silent mode is active. Block threshold is set to 99. Dangerous pages are closed automatically.
+  </div>
+
+  <div class="section-title" style="margin-top:16px;">Actions <span class="line"></span></div>
+  <div class="action-row">
+    <button class="btn btn-danger" id="btn-report-page">🚩 Report Page</button>
+    <button class="btn btn-success" id="btn-trust-domain">✓ Trust Domain</button>
+  </div>
+  <div class="status-msg" id="settings-msg"></div>
+
+  <div class="section-title" style="margin-top:16px;">Data <span class="line"></span></div>
+  <div class="action-row">
+    <button class="btn btn-secondary" id="btn-export-logs">Export History</button>
+    <button class="btn btn-danger" id="btn-clear-stats">Reset Stats</button>
+  </div>
+  <div class="status-msg" id="export-msg"></div>
+
+  <div class="section-title" style="margin-top:16px;">Trusted domains <span class="line"></span></div>
+  <div id="whitelist-list"></div>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

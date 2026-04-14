@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "priority": 10,
+    "action": { "type": "redirect", "redirect": { "extensionPath": "/blocked/blocked.html?reason=FAKE_CLOUDFLARE&score=80" } },
+    "condition": { "urlFilter": "*cloudfarev.*", "resourceTypes": ["main_frame"] }
+  },
+  {
+    "id": 2,
+    "priority": 10,
+    "action": { "type": "redirect", "redirect": { "extensionPath": "/blocked/blocked.html?reason=FAKE_CLOUDFLARE&score=80" } },
+    "condition": { "urlFilter": "*cloudflarev.*", "resourceTypes": ["main_frame"] }
+  },
+  {
+    "id": 3,
+    "priority": 10,
+    "action": { "type": "redirect", "redirect": { "extensionPath": "/blocked/blocked.html?reason=FAKE_CLOUDFLARE&score=80" } },
+    "condition": { "urlFilter": "*cf-challenge.*", "resourceTypes": ["main_frame"] }
+  },
+  {
+    "id": 4,
+    "priority": 10,
+    "action": { "type": "redirect", "redirect": { "extensionPath": "/blocked/blocked.html?reason=FAKE_MEETING&score=75" } },
+    "condition": { "urlFilter": "*gogl-meet.*", "resourceTypes": ["main_frame"] }
+  },
+  {
+    "id": 5,
+    "priority": 10,
+    "action": { "type": "redirect", "redirect": { "extensionPath": "/blocked/blocked.html?reason=FAKE_MEETING&score=75" } },
+    "condition": { "urlFilter": "*meet.conference-web.*", "resourceTypes": ["main_frame"] }
+  },
+  {
+    "id": 6,
+    "priority": 10,
+    "action": { "type": "redirect", "redirect": { "extensionPath": "/blocked/blocked.html?reason=FAKE_CAPTCHA&score=80" } },
+    "condition": { "urlFilter": "*cloudflare-verify.*", "resourceTypes": ["main_frame"] }
+  },
+  {
+    "id": 7,
+    "priority": 10,
+    "action": { "type": "redirect", "redirect": { "extensionPath": "/blocked/blocked.html?reason=FAKE_CAPTCHA&score=80" } },
+    "condition": { "urlFilter": "*cloudflare-check.*", "resourceTypes": ["main_frame"] }
+  },
+  {
+    "id": 8,
+    "priority": 10,
+    "action": { "type": "redirect", "redirect": { "extensionPath": "/blocked/blocked.html?reason=FAKE_CAPTCHA&score=80" } },
+    "condition": { "urlFilter": "*cloudflare-security.*", "resourceTypes": ["main_frame"] }
+  }
+]
