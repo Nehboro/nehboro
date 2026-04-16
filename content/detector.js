@@ -235,7 +235,7 @@
     if (domObserver) { domObserver.disconnect(); domObserver = null; }
     clearTimeout(window._nwMutationTimer);
     // Store full findings for the blocked page
-    chrome.storage.local.set({ nehboro_block_details: { findings, score, url: window.location.href, ts: Date.now() } });
+    chrome.storage.local.set({ nehboro_block_details: { findings, score, meta: collectMeta(), url: window.location.href, ts: Date.now() } });
     const params = new URLSearchParams({ url: window.location.href, score: String(score), reasons: findings.slice(0, 5).map(f => f.category).join(',') });
     window.location.replace(chrome.runtime.getURL('blocked/blocked.html') + '?' + params.toString());
   }

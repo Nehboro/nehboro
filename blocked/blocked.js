@@ -79,6 +79,7 @@
     // Store findings ref for report button
     window._nwFindings = findings;
     window._nwScore = score;
+    window._nwMeta = details?.meta || {};
   });
 
   // ── Render expandable detection cards ─────────────────
@@ -168,6 +169,7 @@
       url: blockedUrl || window.location.href,
       findings: window._nwFindings || [],
       score: window._nwScore || scoreParam,
+      meta: window._nwMeta || {},
     }, (resp) => {
       btn.style.opacity = '1';
       btn.classList.add('sent');

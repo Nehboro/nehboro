@@ -975,7 +975,19 @@ function hashStr(str) {
 chrome.contextMenus.onClicked.addListener(async ({ menuItemId }, tab) => {
   if (!tab?.url) return;
   if (menuItemId === 'nehboro_report') {
-    const result = await openReport(tab.url, [], 0);
+    // Try to pull stored scan data so the report includes findings + extracted URLs
+    let findings = [], score = 0, meta = {};
+    try {
+      const hostname = new URL(tab.url).hostname;
+      const data = await chrome.storage.local.get(`nehboro_scan_${hostname}`);
+      const stored = data[`nehboro_scan_${hostname}`];
+      if (stored) {
+        findings = stored.findings || [];
+        score    = stored.score || 0;
+        meta     = stored.meta || {};
+      }
+    } catch {}
+    const result = await openReport(tab.url, findings, score, meta);
     chrome.notifications.create({
       type: 'basic', iconUrl: 'icons/icon48.png', title: 'Nehboro',
       message: result.ok ? '✅ Report sent successfully.' : '⚠️ Report queued (offline).',

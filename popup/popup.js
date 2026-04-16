@@ -392,7 +392,24 @@
     if (!activeTab?.url) return;
     const btn = document.getElementById('btn-report-page');
     btn.disabled = true; btn.textContent = '⏳ Sending…';
-    const result = await msg('NW_COMMUNITY_REPORT', { findings: [], score: 0 });
+
+    // Pull the stored scan so we can include findings + meta.extractedUrls in the report
+    let findings = [], score = 0, meta = {};
+    try {
+      const resp = await msg('NW_GET_SCAN', { hostname: currentHostname });
+      if (resp?.scan) {
+        findings = resp.scan.findings || [];
+        score    = resp.scan.score || 0;
+        meta     = resp.scan.meta || {};
+      }
+    } catch {}
+
+    const result = await msg('NW_COMMUNITY_REPORT', {
+      url: activeTab.url,
+      findings,
+      score,
+      meta,
+    });
     if (result?.ok) {
       showMsg('settings-msg', '✅ Report sent! Auto-deletes in 12h.');
     } else if (result?.queued) {
