@@ -35,14 +35,7 @@
       titleHints: ['apple id','sign in','icloud'],
       formAction: ['appleid.apple.com','icloud.com'],
     },
-    facebook: {
-      domains: ['facebook.com','fb.com','messenger.com','instagram.com','meta.com'],
-      colors: ['#1877f2','#42b72a','#e4e6eb','#1b74e4'],
-      faviconHints: ['facebook','fb','meta'],
-      logoHints: ['facebook','fb-logo','meta'],
-      titleHints: ['log in','facebook','sign up'],
-      formAction: ['facebook.com','fb.com'],
-    },
+    facebook: { _disabled: true, domains: [], colors: [], faviconHints: [], logoHints: [], titleHints: [], formAction: [] },
     paypal: {
       domains: ['paypal.com','paypal.me'],
       colors: ['#003087','#009cde','#012169','#0070ba'],
@@ -74,30 +67,6 @@
       logoHints: ['github','octocat','invertocat'],
       titleHints: ['sign in','github','log in'],
       formAction: ['github.com'],
-    },
-    linkedin: {
-      domains: ['linkedin.com'],
-      colors: ['#0a66c2','#004182','#0077b5'],
-      faviconHints: ['linkedin'],
-      logoHints: ['linkedin','in-logo'],
-      titleHints: ['sign in','linkedin','log in'],
-      formAction: ['linkedin.com'],
-    },
-    discord: {
-      domains: ['discord.com','discord.gg'],
-      colors: ['#5865f2','#2c2f33','#23272a','#57f287','#fee75c'],
-      faviconHints: ['discord'],
-      logoHints: ['discord','clyde'],
-      titleHints: ['login','discord','log in'],
-      formAction: ['discord.com'],
-    },
-    twitter: {
-      domains: ['twitter.com','x.com'],
-      colors: ['#1da1f2','#14171a','#657786','#000000'],
-      faviconHints: ['twitter','x.com','twimg'],
-      logoHints: ['twitter','x-logo','bird'],
-      titleHints: ['log in','twitter','x','sign in'],
-      formAction: ['twitter.com','x.com'],
     },
     coinbase: {
       domains: ['coinbase.com'],
@@ -165,13 +134,15 @@
   NW_register({
     id: 'VISUAL_BRAND_IMPERSONATION', name: 'Visual Brand Impersonation',
     description: 'Page visually mimics a known brand (colors, logos, favicon, form structure) but is on a non-official domain',
-    defaultScore: 10, tags: ['phishing','visual'],
+    defaultScore: 6, tags: ['phishing','visual'],
     detect(ctx) {
       const hostname = ctx.hostname;
       const title = ctx.title.toLowerCase();
       const html = ctx.pageHTML.toLowerCase();
 
       for (const [brandName, sig] of Object.entries(BRAND_SIGNATURES)) {
+        // Skip brands that are explicitly disabled (social networks - too noisy)
+        if (sig._disabled) continue;
         // Skip if we're on the legit domain
         if (sig.domains.some(d => hostname === d || hostname.endsWith('.' + d))) continue;
 

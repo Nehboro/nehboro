@@ -39,6 +39,58 @@
     }
   }
 
+  // Map detection IDs to pattern groups in PATTERNS to extract ALL matched keywords
+  const PATTERN_GROUPS_BY_DETECTION = {
+    'CLICKFIX_FULL_SEQUENCE': ['CF_OPEN', 'CF_PASTE', 'CF_EXECUTE'],
+    'CLICKFIX_PARTIAL': ['CF_OPEN', 'CF_PASTE', 'CF_EXECUTE'],
+    'CLICKFIX_PRETEXT': ['CF_PRETEXT', 'CF_OPEN'],
+    'CLICKFIX_MULTILANG': ['CF_MULTILANG_FR', 'CF_MULTILANG_ES', 'CF_MULTILANG_DE', 'CF_MULTILANG_IT', 'CF_MULTILANG_PT'],
+    'POWERSHELL_ENCODED': ['PS_ENCODED'],
+    'POWERSHELL_PARTIAL': ['PS_ENCODED', 'PS_PARTIAL'],
+    'LOLBIN_IN_CONTEXT': ['LOLBIN_ALL'],
+    'LOLBIN_COMMAND': ['LOLBIN_ALL'],
+    'CAPTCHA_TEXT': ['CAPTCHA_TEXT'],
+    'FAKE_VERIFICATION_ID': ['VERIFICATION_ID'],
+    'FAKE_CLOUDFLARE_TEXT': ['CLOUDFLARE_TEXT', 'CAPTCHA_TEXT'],
+    'FAKE_CLOUDFLARE_DOMAIN': ['CF_DOMAINS'],
+    'URGENCY': ['URGENCY'],
+    'FAKE_SOFTWARE_DL': ['FAKE_SOFTWARE'],
+    'OBFUSCATION': ['OBFUSCATION'],
+    'OBFUSCATION_HEAVY': ['OBFUSCATION'],
+    'SUSPICIOUS_TLD': ['SUSPICIOUS_TLDS'],
+    'SUSPICIOUS_TERMS': ['SUSPICIOUS_TERMS'],
+  };
+
+  function enrichFinding(finding, ctx) {
+    const groupNames = PATTERN_GROUPS_BY_DETECTION[finding.category];
+    if (!groupNames) return finding;
+    const text = (ctx.rawText || '') + '\n' + (ctx.pageHTML || '');
+    const matched = [];
+    const seen = new Set();
+    for (const groupName of groupNames) {
+      const group = PATTERNS[groupName];
+      if (!group) continue;
+      // SUSPICIOUS_TERMS is a Set of strings, others are arrays of regexes
+      if (group instanceof Set) {
+        const lowerText = text.toLowerCase();
+        for (const term of group) {
+          if (lowerText.includes(term.toLowerCase())) {
+            const k = term.toLowerCase();
+            if (!seen.has(k)) { seen.add(k); matched.push(term); }
+          }
+        }
+      } else if (Array.isArray(group)) {
+        const items = HELPERS.allMatches ? HELPERS.allMatches(group, text, 30) : [];
+        for (const m of items) {
+          const k = m.toLowerCase().substring(0, 80);
+          if (!seen.has(k)) { seen.add(k); matched.push(m); }
+        }
+      }
+    }
+    if (matched.length > 0) finding.matches = matched.slice(0, 30);
+    return finding;
+  }
+
   function runDetection(det, ctx, customScores, existingFindings) {
     try {
       const result = det._postProcess ? det.detect(ctx, existingFindings) : det.detect(ctx);
@@ -52,7 +104,17 @@
         if (r.scoreMultiplier) score *= r.scoreMultiplier;
         if (r.scoreCap) score = Math.min(score, r.scoreCap);
         if (r.scoreBonus) score += r.scoreBonus;
-        return { category: det.id, name: det.name, description: r.description, evidence: r.evidence || '', score: Math.round(score), tags: det.tags };
+        const finding = {
+          category: det.id,
+          name: det.name,
+          description: r.description,
+          evidence: r.evidence || '',
+          // If detection itself returned matches, use those; otherwise we'll enrich after
+          matches: r.matches || undefined,
+          score: Math.round(score),
+          tags: det.tags
+        };
+        return enrichFinding(finding, ctx);
       });
     } catch (e) {
       console.warn(`[Nehboro] Detection ${det.id} error:`, e);
@@ -63,7 +125,9 @@
   function reportToBackground(findings, score, blocked) {
     if (bgReported && !blocked) return; // only send once unless it's a block upgrade
     bgReported = true;
-    chrome.runtime.sendMessage({ type: 'NW_PAGE_SCAN', url: window.location.href, hostname: window.location.hostname, findings, score, blocked, timestamp: Date.now() }).catch(() => {});
+    let meta = {};
+    try { meta = collectMeta(); } catch {}
+    chrome.runtime.sendMessage({ type: 'NW_PAGE_SCAN', url: window.location.href, hostname: window.location.hostname, findings, score, blocked, meta, timestamp: Date.now() }).catch(() => {});
   }
 
   // ── Warning banner with expandable details ─────────────────
@@ -184,6 +248,11 @@
   }
 
   function collectMeta() {
+    let extractedUrls = [];
+    try {
+      const ctx = HELPERS?.buildContext?.();
+      if (HELPERS?.extractUrls && ctx) extractedUrls = HELPERS.extractUrls(ctx);
+    } catch {}
     return {
       title: document.title || '', lang: document.documentElement.lang || '',
       description: (document.querySelector('meta[name="description"]')?.content || '').substring(0, 200),
@@ -192,6 +261,7 @@
       externalScripts: [...document.querySelectorAll('script[src]')].filter(s => { try { return new URL(s.src).hostname !== location.hostname; } catch { return false; } }).length,
       iframes: document.querySelectorAll('iframe').length, links: document.links.length,
       referrer: document.referrer || '', protocol: location.protocol, port: location.port || '',
+      extractedUrls: extractedUrls.slice(0, 100),
     };
   }
 

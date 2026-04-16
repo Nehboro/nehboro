@@ -513,8 +513,20 @@ async function openReport(reportedUrl, findings, score, meta = {}) {
     : findings.slice(0, 8).map(f => {
         const cat = f.category.replace(/_/g, ' ');
         const ev  = f.evidence ? `\n  > \`${f.evidence.substring(0, 100)}\`` : '';
-        return `- **${cat}** *(+${f.score}pts)*: ${f.description}${ev}`;
+        // Include each matched keyword/phrase on its own bullet line
+        let matchesBlock = '';
+        if (Array.isArray(f.matches) && f.matches.length > 0) {
+          const items = f.matches.slice(0, 20).map(m => `    - \`${String(m).replace(/`/g, "'").substring(0, 180)}\``);
+          matchesBlock = `\n  - *Suspicious keywords matched (${f.matches.length}):*\n${items.join('\n')}`;
+        }
+        return `- **${cat}** *(+${f.score}pts)*: ${f.description}${ev}${matchesBlock}`;
       });
+
+  // Extracted URLs block
+  const urls = Array.isArray(meta.extractedUrls) ? meta.extractedUrls : [];
+  const urlLines = urls.length > 0
+    ? urls.slice(0, 50).map(u => `- \`${String(u).substring(0, 200)}\``)
+    : ['- *(no URLs extracted from page)*'];
 
   const body = [
     `**URL:** \`${reportedUrl}\``,
@@ -536,6 +548,9 @@ async function openReport(reportedUrl, findings, score, meta = {}) {
     '',
     '### Detections',
     ...detectionLines,
+    '',
+    `### Extracted URLs (${urls.length})`,
+    ...urlLines,
   ].join('\n');
 
   // ── ntfy headers ───────────────────────────────────────
@@ -621,7 +636,7 @@ async function handle(msg, sender) {
       else if (msg.score>=warnAt) s.warned  = (s.warned  || 0) + 1;
       await chrome.storage.local.set({
         [STORE.STATS]: s,
-        [`nehboro_scan_${msg.hostname}`]: { findings: msg.findings, score: msg.score, ts: msg.timestamp },
+        [`nehboro_scan_${msg.hostname}`]: { findings: msg.findings, score: msg.score, ts: msg.timestamp, meta: msg.meta || {} },
       });
       if (sender.tab?.id) {
         const badge = msg.score >= blockAt ? { text:'!', color:'#e74c3c' }

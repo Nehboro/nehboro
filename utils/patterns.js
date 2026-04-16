@@ -579,6 +579,12 @@ var NW_PATTERNS = NW_PATTERNS || {
     'nehboro.github.io','extsentry.github.io','vsxsentry.github.io',
     'lolexfil.github.io','lolfsaas.github.io','lolc2.github.io','tor-archive.github.io',
   ]),
+
+  // Even when a domain is in SAFE_DOMAINS, these specific paths are NOT trusted.
+  // Used for test/demo/research pages that intentionally host threat content.
+  SAFE_DOMAIN_EXCLUSIONS: [
+    { host: 'nehboro.github.io', pathPrefix: '/nehboro-testing-pages/' },
+  ],
 };
 
 if (typeof window     !== 'undefined') window.NW_PATTERNS     = NW_PATTERNS;

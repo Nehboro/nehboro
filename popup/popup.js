@@ -125,16 +125,81 @@
       html += `<div class="section-title">Detections (${findings.length}) <span class="line"></span></div>`;
       for (const f of [...findings].sort((a,b) => (b.score||0) - (a.score||0))) {
         const hi = f.score >= 30;
+        const fid = 'f_' + Math.random().toString(36).slice(2, 9);
+        const matches = Array.isArray(f.matches) ? f.matches : [];
+        const matchesBlock = matches.length > 0
+          ? `<div class="match-panel" id="${fid}_panel" style="display:none;">
+               <div class="match-panel-title">🔍 Suspicious Keywords <span class="match-count">${matches.length}</span></div>
+               <div class="match-items">
+                 ${matches.slice(0, 40).map(m => `<div class="match-item">${esc(String(m).substring(0, 200))}</div>`).join('')}
+                 ${matches.length > 40 ? `<div class="match-item match-more">+${matches.length - 40} more…</div>` : ''}
+               </div>
+             </div>`
+          : '';
+        const toggleBtn = matches.length > 0
+          ? `<button class="match-toggle" data-target="${fid}_panel">Show ${matches.length} matched keyword${matches.length > 1 ? 's' : ''} ▾</button>`
+          : '';
         html += `
           <div class="finding ${hi ? '' : 'warn'}">
             <span class="finding-score" style="color:${hi ? 'var(--red)' : 'var(--amber)'}">+${f.score}</span>
             <div class="finding-category">${esc((f.name || f.category).replace(/_/g,' '))}</div>
             <div class="finding-desc">${esc(f.description)}</div>
             ${f.evidence ? `<div class="finding-evidence" title="${esc(f.evidence)}">${esc(f.evidence.substring(0,100))}</div>` : ''}
+            ${toggleBtn}
+            ${matchesBlock}
           </div>`;
       }
     }
+
+    // ── Extracted URLs panel ─────────────────────────────────
+    const extractedUrls = Array.isArray(scan.meta?.extractedUrls) ? scan.meta.extractedUrls : [];
+    if (extractedUrls.length > 0) {
+      html += `<div class="section-title">Extracted URLs (${extractedUrls.length}) <span class="line"></span></div>`;
+      html += `<div class="urls-panel" id="urls_panel_wrap">
+        <div class="urls-toolbar">
+          <input class="urls-filter" id="urls_filter" type="text" placeholder="Filter URLs..." />
+          <button class="urls-copy" id="urls_copy">Copy all</button>
+        </div>
+        <div class="urls-list" id="urls_list">
+          ${extractedUrls.slice(0, 100).map(u => `<div class="url-item" title="${esc(u)}">${esc(u)}</div>`).join('')}
+          ${extractedUrls.length > 100 ? `<div class="url-item match-more">+${extractedUrls.length - 100} more…</div>` : ''}
+        </div>
+      </div>`;
+    }
+
     container.innerHTML = html;
+
+    // Wire up toggle buttons
+    container.querySelectorAll('.match-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const panel = container.querySelector('#' + btn.dataset.target);
+        if (!panel) return;
+        const showing = panel.style.display !== 'none';
+        panel.style.display = showing ? 'none' : 'block';
+        btn.innerHTML = btn.innerHTML.replace(showing ? '▴' : '▾', showing ? '▾' : '▴');
+      });
+    });
+
+    // URL filter and copy
+    const urlFilter = container.querySelector('#urls_filter');
+    const urlsList  = container.querySelector('#urls_list');
+    if (urlFilter && urlsList) {
+      urlFilter.addEventListener('input', () => {
+        const q = urlFilter.value.trim().toLowerCase();
+        urlsList.querySelectorAll('.url-item').forEach(el => {
+          el.style.display = (!q || el.textContent.toLowerCase().includes(q)) ? 'block' : 'none';
+        });
+      });
+    }
+    const copyBtn = container.querySelector('#urls_copy');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(extractedUrls.join('\n')).then(() => {
+          copyBtn.textContent = '✓ Copied';
+          setTimeout(() => { copyBtn.textContent = 'Copy all'; }, 1500);
+        });
+      });
+    }
   }
 
   // ── FEEDS TAB ───────────────────────────────────────────
@@ -425,7 +490,7 @@
         { id:'SEO_POISONING', name:'SEO Poisoning / Cloaking', description:'Referrer-based content switching', defaultScore:15, tags:['evasion','heuristic'] },
         { id:'MSEDGE_KIOSK', name:'Edge Kiosk Mode Phishing', description:'msedge --kiosk used for fake fullscreen login', defaultScore:50, tags:['phishing','clickfix','critical'] },
         { id:'BROWSER_LOCK', name:'Browser Lock / Fullscreen Abuse', description:'Fullscreen API, history traps, or popstate locks', defaultScore:30, tags:['social-engineering','scam'] },
-        { id:'VISUAL_BRAND_IMPERSONATION', name:'Visual Brand Impersonation', description:'Page visually mimics a brand (colors, logos, favicon) on non-official domain', defaultScore:10, tags:['phishing','visual','critical'] },
+        { id:'VISUAL_BRAND_IMPERSONATION', name:'Visual Brand Impersonation', description:'Page visually mimics a brand (colors, logos, favicon) on non-official domain', defaultScore:6, tags:['phishing','visual','critical'] },
         { id:'FAVICON_BRAND_MISMATCH', name:'Favicon Brand Mismatch', description:'Favicon loads from brand CDN on non-official domain', defaultScore:20, tags:['phishing','visual'] },
         { id:'LOGIN_FORM_VISUAL', name:'Suspicious Login Form Layout', description:'Centered narrow login form typical of phishing pages', defaultScore:8, tags:['phishing','visual','heuristic'] },
         { id:'BRAND_ASSET_THEFT', name:'Brand Asset Loading', description:'Page loads images/CSS/fonts from brand CDN it does not belong to', defaultScore:10, tags:['phishing','visual'] },
