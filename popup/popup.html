@@ -193,7 +193,7 @@
     .btn:hover:not(:disabled) { transform:translateY(-1px); }
     .btn-primary { background:linear-gradient(135deg,#0095cc,var(--cyan)); color:#000; box-shadow:0 2px 8px rgba(0,212,255,.2); }
     .btn-primary:hover { box-shadow:0 4px 12px rgba(0,212,255,.3); }
-    .btn-danger { background:linear-gradient(135deg,#cc2040,var(--red)); color:#fff; }
+    .btn-danger { background:linear-gradient(135deg,#e53e5f,#ff5577); color:#fff; }
     .btn-success { background:linear-gradient(135deg,#00aa55,var(--green)); color:#000; }
     .btn-secondary { background:var(--surface2); color:var(--muted); border:1px solid var(--border); }
     .btn-secondary:hover { color:var(--text); border-color:var(--dim); }
@@ -310,8 +310,10 @@
 <div class="tab-content" id="tab-feeds">
   <div class="section-title"><span class="icon">⚡</span> Static IOC Engine <span class="line"></span></div>
   <div class="info-box" style="margin-bottom:10px;">
-    Blocks known-bad domains, URLs, IPs, and ports <strong>before page load</strong> using community-maintained threat feeds.
-    Matched IOCs are blocked instantly via declarativeNetRequest rules.
+    Focused on known scam and phishing domains, URLs, IPs, and ports - blocked <strong>before page load</strong> using community-maintained threat feeds via declarativeNetRequest rules.
+  </div>
+  <div class="info-box" style="margin-bottom:10px;background:var(--amber-dim);border-left:3px solid var(--amber);">
+    <strong>Note:</strong> Chrome caps the number of static IOC rules per extension, so this engine is a supplementary layer. The <strong>dynamic heuristic engine</strong> (Dynamic tab) is the main feature - it analyzes every page in real time and catches threats that aren't in any feed yet.
   </div>
 
   <div class="section-title">Default feeds <span class="line"></span></div>
@@ -436,7 +438,7 @@
 
   <div class="section-title" style="margin-top:16px;">Actions <span class="line"></span></div>
   <div class="action-row">
-    <button class="btn btn-danger" id="btn-report-page">🚩 Report Page</button>
+    <button class="btn btn-danger" id="btn-report-page"><img src="../icons/report-flag.png" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;">Report Page</button>
     <button class="btn btn-success" id="btn-trust-domain">✓ Trust Domain</button>
   </div>
   <div class="status-msg" id="settings-msg"></div>

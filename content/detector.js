@@ -101,7 +101,6 @@
     wrapper.innerHTML = `
       <div style="all:initial;display:flex;align-items:center;justify-content:space-between;gap:12px;background:#1a1a2e;padding:10px 16px;border-bottom:3px solid ${accent};font-family:inherit;">
         <div style="all:initial;display:flex;align-items:center;gap:10px;font-family:inherit;">
-          <span style="font-size:20px;">${isBlock?'🚨':'⚠️'}</span>
           <div>
             <div style="all:initial;font-weight:700;color:${accent};font-family:inherit;font-size:14px;display:flex;align-items:center;gap:6px;"><img src="${chrome.runtime.getURL('icons/icon48.png')}" style="width:22px;height:22px;"> Nehboro - ${isBlock?'DANGER':'WARNING'} (Score: ${score})</div>
             <div style="all:initial;color:#ccc;font-size:12px;font-family:inherit;margin-top:2px;">${topCategories}</div>

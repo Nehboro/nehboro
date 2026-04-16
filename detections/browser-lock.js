@@ -25,7 +25,7 @@
 
       // beforeunload trap with custom message
       if (/onbeforeunload|addEventListener\s*\(\s*['"]beforeunload['"]/i.test(ctx.pageHTML) &&
-          /returnValue\s*=|preventDefault/i.test(ctx.pageHTML))
+          /returnValue\s*=|preventDefault|return\s+['"][^'"]+['"]|return\s+`[^`]+`/i.test(ctx.pageHTML))
         signals.push('beforeunload trap');
 
       // Disable right-click + keyboard combos

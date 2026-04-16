@@ -20,6 +20,17 @@
         /(?:identifiants?\s+de\s+messagerie|mots?\s+de\s+passe\s+bancaires?|identifiant\s+Facebook)/i,
         /(?:numéro|numero)\s+(?:de\s+)?(?:sécurité|securite)\s+gratuit/i,
         /(?:raisons?\s+de\s+sécurité|securite)/i,
+        // More common French scam variants
+        /(?:votre|son)\s+(?:ordinateur|système|systeme|PC|appareil)\s+(?:est|a\s+été)\s+(?:bloqué|bloqu[ée]|infect[ée]|compromis|verrouill[ée])/i,
+        /(?:appelez|contactez)\s+(?:immédiatement|immediatement|maintenant|d['']urgence)/i,
+        /(?:supports?|assistance)\s+technique\s+(?:Microsoft|Apple|Google|Windows)/i,
+        /(?:ne\s+fermez|n[e']?\s*éteignez)\s+pas\s+(?:cette|votre)/i,
+        /(?:vos|tes)\s+(?:données|donnees|informations)\s+personnelles?\s+(?:sont|seront)\s+(?:en\s+danger|exposées|volées)/i,
+        /(?:votre|sa)\s+(?:licence|abonnement|certificat)\s+(?:Windows|Microsoft|Office)\s+(?:a\s+)?expir[ée]/i,
+        /Windows\s+Defender\s+a\s+(?:détecté|trouvé|identifié)/i,
+        /(?:cliquez\s+ici\s+pour\s+(?:renouveler|réparer|nettoyer|continuer))/i,
+        /menace\s+(?:critique|grave|urgente|détectée)/i,
+        /virus\s+(?:détectés?|trouvés?|identifiés?)/i,
       ];
 
       // ── Spanish ─────────────────────────────────────────

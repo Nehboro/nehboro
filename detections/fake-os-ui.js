@@ -12,13 +12,25 @@
       const fakeDialogPats = [
         /security\s+warning/i,
         /windows\s+security\s+(?:alert|warning|notification)/i,
-        /microsoft\s+(?:warning|alert|notification)\s+(?:alert)?/i,
+        /microsoft\s+(?:warning|alert|notification)/i,
         /system\s+(?:alert|warning|error|notification)/i,
         /(?:windows|microsoft)\s+(?:support|help)\s+(?:alert|warning)/i,
+        /windows\s+defender/i,
+        /(?:start\s+menu|taskbar|system\s+tray)/i,
       ];
       let dialogHits = 0;
       for (const p of fakeDialogPats) if (p.test(ctx.rawText)) dialogHits++;
-      if (dialogHits >= 2) signals.push(`${dialogHits} fake dialog titles`);
+      if (dialogHits >= 1) signals.push(`${dialogHits} fake dialog/UI keyword(s)`);
+
+      // CSS that mimics Windows colors (Microsoft blue, taskbar dark, etc.)
+      const winColors = [
+        /background\s*:\s*#0078d[47]/i, // Microsoft blue
+        /background\s*:\s*#1f1f1f/i,    // Windows dark
+        /background\s*:\s*#0067b8/i,    // Microsoft accent
+      ];
+      let colorHits = 0;
+      for (const p of winColors) if (p.test(ctx.pageHTML)) colorHits++;
+      if (colorHits >= 1 && dialogHits >= 1) signals.push('Windows-styled colors');
 
       // CSS that creates fake window chrome (title bars, X buttons, dialog borders)
       const fakeWindowCSS = [
@@ -27,7 +39,7 @@
       ];
       let cssHits = 0;
       for (const p of fakeWindowCSS) cssHits += (ctx.pageHTML.match(p) || []).length;
-      if (cssHits >= 3) signals.push(`${cssHits} fake window UI elements`);
+      if (cssHits >= 2) signals.push(`${cssHits} fake window UI elements`);
 
       // "Back to safety" / "OK" / "Close" buttons that are part of the scam (not real browser UI)
       if (/(?:back\s+to\s+safety|return\s+to\s+safety|close\s+all\s+tabs)/i.test(ctx.rawText) &&
@@ -41,7 +53,7 @@
         signals.push('stacked overlay dialogs');
 
       // Audio autoplay (scam pages often play alarm sounds)
-      if (/<audio[^>]*autoplay/i.test(ctx.pageHTML) || /\.play\s*\(\s*\)/i.test(ctx.pageHTML))
+      if (/<audio[^>]*autoplay/i.test(ctx.pageHTML))
         signals.push('autoplay audio');
 
       if (signals.length >= 1) {

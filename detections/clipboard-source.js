@@ -5,7 +5,7 @@
   NW_register({
     id: 'CLIPBOARD_SOURCE', name: 'Clipboard Write in Source',
     description: 'Page source contains navigator.clipboard.writeText or execCommand copy calls',
-    defaultScore: 30, tags: ['clickfix','malware'],
+    defaultScore: 10, tags: ['clickfix','malware'],
     detect(ctx) {
       const pats = [
         /navigator\s*\.\s*clipboard\s*\.\s*writeText/gi,

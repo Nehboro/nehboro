@@ -484,6 +484,24 @@ async function openReport(reportedUrl, findings, score, meta = {}) {
   let hostname = '';
   try { hostname = new URL(reportedUrl).hostname; } catch {}
 
+  // ── Deduplication: don't report the same URL twice within 24 hours ──
+  const REPORT_KEY = 'nehboro_reported_urls';
+  const { [REPORT_KEY]: reported = {} } = await chrome.storage.local.get(REPORT_KEY);
+  const now = Date.now();
+  const DEDUP_WINDOW = 24 * 60 * 60 * 1000; // 24 hours
+
+  // Clean old entries
+  for (const [url, ts] of Object.entries(reported)) {
+    if (now - ts > DEDUP_WINDOW) delete reported[url];
+  }
+
+  if (reported[reportedUrl] && (now - reported[reportedUrl] < DEDUP_WINDOW)) {
+    return { ok: true, alreadyReported: true };
+  }
+
+  reported[reportedUrl] = now;
+  await chrome.storage.local.set({ [REPORT_KEY]: reported });
+
   const version  = chrome.runtime.getManifest().version;
   const dateStr  = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
   const isManual = findings.length === 0;

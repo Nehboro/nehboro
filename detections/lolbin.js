@@ -18,4 +18,26 @@
       return { description: `${hits.length} LOLBin(s) alongside execution instructions`, evidence: examples, scoreBonus: hits.length > 3 ? 10 : 0 };
     }
   });
+
+  // Standalone LOLBin detection - fires when multiple LOLBin commands appear in page
+  // even without ClickFix execution instructions (suspicious on its own)
+  NW_register({
+    id: 'LOLBIN_COMMAND', name: 'LOLBin Command References',
+    description: 'Multiple living-off-the-land binary commands appear in page content',
+    defaultScore: 25, tags: ['malware'],
+    detect(ctx) {
+      const combined = ctx.rawText + ctx.pageHTML;
+      const hits = P.LOLBIN_ALL.filter(p => p.test(combined));
+      // Multiple LOLBin commands in one page is suspicious even without ClickFix instructions
+      if (hits.length >= 3) {
+        const examples = hits.slice(0, 4).map(p => (combined.match(p) || [''])[0].substring(0, 40)).filter(Boolean).join(', ');
+        return {
+          description: `${hits.length} different LOLBin commands referenced in page`,
+          evidence: examples,
+          scoreBonus: hits.length >= 5 ? 15 : 0,
+        };
+      }
+      return null;
+    }
+  });
 })();

@@ -322,6 +322,15 @@ var NW_PATTERNS = NW_PATTERNS || {
     /cleanmymac[^.]*\./i, /\bzkcall\b/i, /zk-call-messenger/i,
     /(?:ledger|exodus|atomic)\s+(?:live|wallet)[^\s]*(?:download|install|update)/i,
     /(?:download|install)\s+(?:the\s+)?(?:latest\s+)?(?:zoom|teams|slack|discord)\s+.*(?:fix|update|patch|repair)/i,
+    // Cracked / pirated software lures
+    /(?:cracked?|cracker?|keygen|patcher|activator|loader)\.(?:exe|zip|rar)/i,
+    /\b(?:cracked|crack|nulled|premium\s+unlocked|pro\s+unlocked|all\s+features\s+unlocked)\b/i,
+    /(?:office|windows|adobe|photoshop)\s+(?:\d+|365|11|10)\s+(?:activator|keygen|patch|crack)/i,
+    // Free fake installer naming
+    /(?:zoom|teams|skype|firefox|chrome|brave|signal)\s*setup[\w-]*\.(?:exe|msi|dmg|pkg)/i,
+    /antivirus\s+(?:\d{4}|premium|pro|gold).*(?:free|crack|key)/i,
+    // Free software download lures (combined signal)
+    /free\s+(?:zoom|teams|skype|whatsapp)\s+(?:installer|download|setup)/i,
   ],
 
   // ── Heavy obfuscation ─────────────────────────────────────
@@ -332,6 +341,14 @@ var NW_PATTERNS = NW_PATTERNS || {
     /eval\s*\(\s*(?:atob|unescape)\s*\(/i,
     /String\.fromCharCode\s*\([^)]{60,}\)/i,
     /_0x[a-f0-9]+\s*\(\s*_0x[a-f0-9]+\s*\(\s*_0x[a-f0-9]+/,
+    // Common obfuscation patterns
+    /var\s+_0x[a-f0-9]{3,8}\s*=\s*\[/i,
+    /\\x[0-9a-f]{2}\\x[0-9a-f]{2}\\x[0-9a-f]{2}/i,
+    /new\s+Function\s*\(\s*['"]return['"][\s,]+['"]eval['"]/i,
+    /document\.write\s*\(\s*unescape/i,
+    /\beval\s*\(\s*['"][^'"]{30,}/i,
+    /window\s*\[\s*_0x[a-f0-9]+/i,
+    /String\.fromCharCode\s*\(\s*\d+\s*,\s*\d+\s*,\s*\d+/i,
   ],
 
   // ── Urgency phrases ───────────────────────────────────────
@@ -343,6 +360,14 @@ var NW_PATTERNS = NW_PATTERNS || {
     /verify\s+your\s+(?:identity|account)\s+(?:now|immediately|to\s+continue)/i,
     /\baction\s+required\b/i,
     /your\s+access\s+(?:has\s+been\s+|will\s+be\s+)?(?:suspended|revoked|blocked)/i,
+    /(?:limited|last)\s+(?:time|chance)\s+offer/i,
+    /(?:hurry|act\s+fast)[!.]/i,
+    /only\s+\d+\s+(?:left|remaining|in\s+stock)/i,
+    /(?:dont|don'?t)\s+miss\s+out/i,
+    /(?:offer|deal|sale)\s+(?:expires?|ends?)\s+(?:soon|in\s+\d+|today)/i,
+    /(?:exclusive|special)\s+deal/i,
+    /(?:before|until)\s+(?:time|the\s+time)\s+runs?\s+out/i,
+    /(?:click|order|buy)\s+now\s+before/i,
   ],
 
   // ── Suspicious keyword set ────────────────────────────────
@@ -550,6 +575,9 @@ var NW_PATTERNS = NW_PATTERNS || {
     'youtube.com','zalando.com','zapier.com','zappos.com','zara.com','zdnet.com',
     'zeit.de','zelle.com','zendesk.com','zillow.com','ziprecruiter.com','zocdoc.com',
     'zoom.us',
+    // Threat research / security researcher sites on GitHub Pages
+    'nehboro.github.io','extsentry.github.io','vsxsentry.github.io',
+    'lolexfil.github.io','lolfsaas.github.io','lolc2.github.io','tor-archive.github.io',
   ]),
 };
 

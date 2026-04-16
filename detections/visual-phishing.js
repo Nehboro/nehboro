@@ -167,9 +167,6 @@
     description: 'Page visually mimics a known brand (colors, logos, favicon, form structure) but is on a non-official domain',
     defaultScore: 10, tags: ['phishing','visual'],
     detect(ctx) {
-      // Only analyze pages with login forms
-      if (!ctx.hasPwdField && ctx.inputCount < 2) return null;
-
       const hostname = ctx.hostname;
       const title = ctx.title.toLowerCase();
       const html = ctx.pageHTML.toLowerCase();
@@ -219,17 +216,29 @@
           }
         }
 
-        // 6. Brand name in body text with password field
-        if (html.includes(brandName) && ctx.hasPwdField) {
-          signals += 1; evidence.push('brand-text:' + brandName);
+        // 6. Brand name in body text + sign-in / login text
+        const brandInText = html.includes(brandName);
+        const signInText = /sign\s*in|log\s*in|connectez-vous|connexion/i.test(ctx.rawText);
+        if (brandInText && signInText) {
+          signals += 1; evidence.push('brand-signin-text:' + brandName);
         }
 
-        // Threshold: need 4+ signals for high confidence
-        if (signals >= 4) {
+        // 7. Brand name in title bar
+        if (brandInText && titleMatch) {
+          signals += 1; evidence.push('brand-mention-confirmed');
+        }
+
+        // Strong signal: form with password field on non-official domain
+        if (ctx.hasPwdField) {
+          signals += 1; evidence.push('password-field-present');
+        }
+
+        // Threshold: need 3+ signals (lowered from 4)
+        if (signals >= 3) {
           return {
             description: `Page visually impersonates ${brandName.charAt(0).toUpperCase() + brandName.slice(1)} (${signals} visual signals) on non-official domain ${hostname}`,
             evidence: evidence.join(' | '),
-            scoreBonus: signals >= 6 ? 15 : signals >= 5 ? 8 : 0,
+            scoreBonus: signals >= 6 ? 18 : signals >= 5 ? 12 : signals >= 4 ? 6 : 0,
           };
         }
       }

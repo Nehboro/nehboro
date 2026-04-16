@@ -396,7 +396,7 @@
         { id:'FAKE_SOCIAL_PROOF', name:'Fake Social Proof', description:'Fake user count or social proof claims', defaultScore:12, tags:['social-engineering'] },
         { id:'SUSPICIOUS_HOST', name:'Suspicious Hosting + Credentials', description:'Credential form on free/suspicious hosting', defaultScore:20, tags:['phishing'] },
         { id:'CLIPBOARD_HIJACK', name:'Clipboard Hijack (Runtime)', description:'Suspicious clipboard write at runtime', defaultScore:40, tags:['clickfix','malware','critical'] },
-        { id:'CLIPBOARD_SOURCE', name:'Clipboard Write in Source', description:'Clipboard API calls in page source', defaultScore:30, tags:['clickfix','malware'] },
+        { id:'CLIPBOARD_SOURCE', name:'Clipboard Write in Source', description:'Clipboard API calls in page source', defaultScore:10, tags:['clickfix','malware'] },
         { id:'LOOKALIKE_HOMOGRAPH', name:'Homograph Domain Attack', description:'Domain uses character substitution to impersonate', defaultScore:40, tags:['phishing','critical'] },
         { id:'LOOKALIKE_TYPOSQUAT', name:'Typosquat Domain', description:'Domain 1-2 chars from a major brand', defaultScore:35, tags:['phishing'] },
         { id:'LOOKALIKE_BRAND_SUBSTRING', name:'Brand Name in Domain', description:'Domain contains brand name but is not official', defaultScore:10, tags:['phishing'] },
