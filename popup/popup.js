@@ -66,7 +66,7 @@
       container.innerHTML = `
         <div class="status-card safe">
           <div class="status-row">
-            <span class="status-icon">🔒</span>
+            <span class="status-icon">✅</span>
             <div>
               <div class="status-label">No Threats Detected</div>
               <div class="status-host">${esc(currentHostname) || 'No page loaded'}</div>
