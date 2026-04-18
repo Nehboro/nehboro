@@ -75,7 +75,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Release
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && steps.check_release.outputs.exists == 'false'
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
         uses: softprops/action-gh-release@v2.6.2
         with:
           tag_name: ${{ steps.version.outputs.tag }}

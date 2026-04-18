@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nehboro - Threat Blocked</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      min-height: 100vh; background: #0a0a14; color: #e8e8f0;
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 32px 20px;
+    }
+    .card {
+      background: #12121e; border: 1px solid #2a2a4a; border-top: 4px solid #e74c3c;
+      border-radius: 12px; padding: 36px 40px; max-width: 640px; width: 100%; text-align: center;
+    }
+    .shield { font-size: 64px; display: block; margin-bottom: 16px;
+              animation: pulse 2.4s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
+    h1 { font-size: 26px; font-weight: 700; color: #e74c3c; margin-bottom: 6px; }
+    .subtitle { font-size: 14px; color: #7a7a9a; margin-bottom: 22px; }
+
+    .url-label { font-size: 10px; text-transform: uppercase; letter-spacing: .8px; color: #7a7a9a; margin-bottom: 4px; text-align: left; }
+    .url-box {
+      background: #1a0a0a; border: 1px solid #3d1010; border-radius: 6px;
+      padding: 10px 16px; font-family: 'Courier New', monospace; font-size: 12px;
+      color: #e74c3c; word-break: break-all; margin-bottom: 20px; text-align: left;
+    }
+
+    .info-row { display: flex; gap: 20px; align-items: center; margin-bottom: 22px; }
+    .score-ring {
+      flex-shrink: 0; width: 84px; height: 84px; border-radius: 50%;
+      border: 3px solid #e74c3c; background: #1a0a0a;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      box-shadow: 0 0 20px rgba(231,76,60,0.15);
+    }
+    .score-num { font-size: 24px; font-weight: 700; color: #e74c3c; line-height: 1; }
+    .score-label { font-size: 9px; color: #7a7a9a; text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
+    .info-desc { text-align: left; font-size: 13px; color: #aaa; line-height: 1.6; }
+
+    /* Detections */
+    .detections-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px; cursor: pointer; padding: 8px 0;
+    }
+    .detections-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: #7a7a9a; }
+    .detections-toggle {
+      font-size: 11px; color: #2980b9; background: none; border: 1px solid #2a2a4a;
+      border-radius: 4px; padding: 3px 10px; cursor: pointer; font-family: inherit;
+    }
+    .detections-toggle:hover { background: #1a1a2e; }
+    .detections-list { margin-bottom: 20px; }
+
+    .detection-card {
+      background: #0f0f1e; border: 1px solid #2a2a4a; border-radius: 8px;
+      margin-bottom: 6px; overflow: hidden; text-align: left;
+    }
+    .detection-row {
+      display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+      cursor: pointer; transition: background .15s;
+    }
+    .detection-row:hover { background: #1a1a2e; }
+    .detection-arrow { font-size: 10px; color: #555; font-family: monospace; flex-shrink: 0; width: 14px; transition: transform .2s; }
+    .detection-name { flex: 1; font-size: 13px; font-weight: 600; color: #ddd; }
+    .detection-score { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 4px; flex-shrink: 0; }
+    .detection-score.high { background: #3d1010; color: #e74c3c; }
+    .detection-score.med  { background: #3d2810; color: #f39c12; }
+    .detection-score.low  { background: #102040; color: #2980b9; }
+
+    .detection-detail { display: none; padding: 0 14px 12px 38px; font-size: 12px; }
+    .detection-detail.open { display: block; }
+    .detail-desc { color: #aaa; margin-bottom: 6px; line-height: 1.5; }
+    .detail-evidence-label { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
+    .detail-evidence {
+      background: #0a0a14; border: 1px solid #1a1a2e; border-radius: 4px;
+      padding: 8px 10px; font-family: 'Courier New', monospace; font-size: 11px;
+      color: #7a7a9a; word-break: break-all; margin-bottom: 6px; line-height: 1.5;
+      max-height: 120px; overflow-y: auto;
+    }
+    .detail-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+    .detail-tag { font-size: 10px; background: #2a2a4a; padding: 2px 7px; border-radius: 3px; color: #7a7a9a; }
+    .detail-tag.critical { color: #e74c3c; border: 1px solid #3d1010; }
+    .detail-tag.combo { color: #f39c12; border: 1px solid #3d2810; }
+
+    /* Score bar */
+    .score-breakdown {
+      display: flex; align-items: center; gap: 6px; margin-bottom: 16px;
+      padding: 6px 10px; background: #0f0f1e; border-radius: 6px; border: 1px solid #2a2a4a;
+    }
+    .score-bar { flex: 1; height: 6px; background: #1a1a2e; border-radius: 3px; overflow: hidden; }
+    .score-fill { height: 100%; border-radius: 3px; transition: width .8s ease-out; }
+    .score-bar-label { font-size: 10px; color: #7a7a9a; white-space: nowrap; }
+
+    /* Fallback */
+    .reason-tag {
+      display: inline-block; background: #2a1a1a; border: 1px solid #3d1010;
+      color: #e74c3c; border-radius: 4px; padding: 3px 9px;
+      font-size: 12px; font-weight: 600; margin: 3px 3px 3px 0;
+    }
+
+    /* ── Enhanced buttons ──────────────────────────────── */
+    .actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 4px; }
+
+    .btn {
+      border: none; border-radius: 8px; padding: 13px 26px; cursor: pointer;
+      font-size: 14px; font-weight: 700; transition: all .22s ease;
+      display: inline-flex; align-items: center; gap: 8px;
+      letter-spacing: .3px; position: relative; overflow: hidden;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+
+    .btn-back {
+      background: linear-gradient(135deg, #2980b9 0%, #3498db 100%);
+      color: #fff; box-shadow: 0 4px 14px rgba(41,128,185,0.35);
+      font-size: 15px; padding: 14px 32px;
+    }
+    .btn-back:hover { box-shadow: 0 6px 20px rgba(41,128,185,0.5); background: linear-gradient(135deg, #2471a3 0%, #2e86c1 100%); }
+    .btn-back .btn-icon { font-size: 18px; }
+
+    .btn-report {
+      background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+      color: #fff; box-shadow: 0 4px 14px rgba(231,76,60,0.3);
+    }
+    .btn-report:hover { box-shadow: 0 6px 20px rgba(231,76,60,0.45); background: linear-gradient(135deg, #a93226 0%, #cb4335 100%); }
+    .btn-report.sent { background: linear-gradient(135deg, #1e8449 0%, #27ae60 100%); box-shadow: 0 4px 14px rgba(39,174,96,0.3); cursor: default; }
+    .btn-report .btn-icon { font-size: 16px; }
+
+    .btn-proceed {
+      background: transparent; border: 1px solid #333; color: #555; font-size: 12px;
+      font-weight: 500; padding: 10px 18px; letter-spacing: 0;
+    }
+    .btn-proceed:hover { border-color: #555; color: #888; background: rgba(255,255,255,0.02); }
+
+    .proceed-warning {
+      display: none; background: #2a1500; border: 1px solid #f39c12; border-radius: 8px;
+      padding: 14px 18px; font-size: 13px; color: #f39c12; margin-top: 16px; line-height: 1.5;
+    }
+    .btn-proceed-confirm {
+      display: inline-flex; align-items: center; gap: 6px; margin-top: 10px;
+      background: transparent; border: 1px solid #e74c3c; color: #e74c3c;
+      border-radius: 6px; padding: 8px 18px; cursor: pointer;
+      font-size: 12px; font-weight: 600; transition: all .2s;
+    }
+    .btn-proceed-confirm:hover { background: rgba(231,76,60,0.1); }
+
+    .footer { margin-top: 24px; font-size: 12px; color: #444; }
+    .footer strong { color: #666; }
+
+    @keyframes checkmark { 0%{transform:scale(0)} 50%{transform:scale(1.2)} 100%{transform:scale(1)} }
+    .check-anim { animation: checkmark .4s ease-out; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <span class="shield">🛡️</span>
+  <h1 data-i18n="threat_blocked">Threat Blocked</h1>
+  <p class="subtitle" data-i18n="prevented_access">Nehboro prevented you from accessing a dangerous page.</p>
+
+  <div class="url-label" data-i18n="blocked_url">Blocked URL</div>
+  <div class="url-box" id="blocked-url" data-i18n="retrieving_url">Retrieving URL…</div>
+
+  <div class="info-row">
+    <div class="score-ring">
+      <div class="score-num" id="score-value">-</div>
+      <div class="score-label" data-i18n="threat_score_label">Threat Score</div>
+    </div>
+    <div class="info-desc" id="info-desc" data-i18n="threat_description">
+      This page exceeded the threat threshold, indicating a high likelihood of phishing, scam, or malware delivery.
+    </div>
+  </div>
+
+  <div class="score-breakdown" id="score-breakdown" style="display:none;">
+    <span class="score-bar-label" id="score-bar-text">0 pts</span>
+    <div class="score-bar"><div class="score-fill" id="score-fill" style="width:0%;background:#e74c3c;"></div></div>
+    <span class="score-bar-label"><span data-i18n="block_at">Block</span>: <span id="score-threshold">70</span></span>
+  </div>
+
+  <div id="detections-section" style="display:none;">
+    <div class="detections-header" id="detections-header">
+      <span class="detections-title" id="detections-title" data-i18n="detections">Detections (0)</span>
+      <button class="detections-toggle" id="detections-toggle" data-i18n="expand_all">▼ Expand all</button>
+    </div>
+    <div class="detections-list" id="detections-list"></div>
+  </div>
+
+  <div id="reasons-fallback" style="display:none; margin-bottom:20px; text-align:left;">
+    <div class="detections-title" style="margin-bottom:8px;" data-i18n="detection_categories">Detection categories</div>
+    <div id="reasons-list"></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-back" id="btn-back">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M19 12H5"></path><polyline points="12 19 5 12 12 5"></polyline></svg>
+      <span data-i18n="go_back">Go Back</span>
+    </button>
+    <button class="btn btn-report" id="btn-report">
+      <span class="btn-icon"><img src="../icons/report-flag.png" style="width:22px;height:22px;vertical-align:middle;"></span> <span data-i18n="report_threat">Report Threat</span>
+    </button>
+  </div>
+  <div style="text-align:center;margin-top:14px;">
+    <button class="btn btn-proceed" id="btn-proceed" data-i18n="proceed_understand">I understand the risk - let me proceed</button>
+  </div>
+
+  <div class="proceed-warning" id="proceed-warning">
+    ⚠️ <span data-i18n="proceed_warning">Proceeding exposes you to credential theft, malware, or scam.
+    This page was flagged by community threat intelligence and heuristic analysis.</span><br>
+    <button class="btn-proceed-confirm" id="btn-proceed-confirm" data-i18n="proceed_anyway">
+      ⚠️ Proceed anyway (not recommended)
+    </button>
+  </div>
+
+  <div class="footer"><span data-i18n="protected_by">Protected by</span> <strong><img src="../icons/icon48.png" style="width:18px;height:18px;vertical-align:middle;margin-right:2px;">Nehboro</strong> Community Threat Intelligence</div>
+</div>
+
+<script src="../utils/i18n.js"></script>
+<script src="blocked.js"></script>
+</body>
+</html>

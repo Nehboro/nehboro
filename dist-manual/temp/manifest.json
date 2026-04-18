@@ -1,0 +1,166 @@
+{
+  "manifest_version": 3,
+  "name": "Nehboro",
+  "version": "1.0.0",
+  "description": "Triple-engine threat protection: IOC feeds, 97 heuristic detections, and optional Claude AI scan every page for phishing, scams, ClickFix, and malware.",
+  "author": "mthcht",
+  "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess",
+    "webRequest",
+    "tabs",
+    "storage",
+    "alarms",
+    "notifications",
+    "scripting",
+    "contextMenus"
+  ],
+  "host_permissions": [
+    "<all_urls>",
+    "https://ntfy.sh/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content/runtime-interceptor.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": true,
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "utils/patterns.js",
+        "utils/helpers.js",
+        "utils/feeds.js",
+        "detections/_registry.js",
+        "detections/base64-payload.js",
+        "detections/av-dismissal.js",
+        "detections/bonus-combos.js",
+        "detections/browser-lock.js",
+        "detections/card-skimmer.js",
+        "detections/clickfix-sequence.js",
+        "detections/clickfix-multilang.js",
+        "detections/clickfix-pretext.js",
+        "detections/clipboard-hijack.js",
+        "detections/clipboard-source.js",
+        "detections/consentfix.js",
+        "detections/crypto-address.js",
+        "detections/crypto-wallet.js",
+        "detections/data-theft-scare.js",
+        "detections/data-uri.js",
+        "detections/device-code-phish.js",
+        "detections/dialog-spam.js",
+        "detections/dns-clickfix.js",
+        "detections/eval-dynamic.js",
+        "detections/external-scripts.js",
+        "detections/fake-antivirus.js",
+        "detections/fake-browser-error.js",
+        "detections/fake-cloudflare.js",
+        "detections/fake-countdown.js",
+        "detections/fake-download.js",
+        "detections/fake-error.js",
+        "detections/fake-error-code.js",
+        "detections/fake-meeting.js",
+        "detections/fake-social-proof.js",
+        "detections/fake-software.js",
+        "detections/fake-os-ui.js",
+        "detections/fake-update.js",
+        "detections/fake-url-bar.js",
+        "detections/fake-verification-id.js",
+        "detections/filefix.js",
+        "detections/finger-abuse.js",
+        "detections/form-exfil.js",
+        "detections/formjacking.js",
+        "detections/fullscreen-spam.js",
+        "detections/hex-ip.js",
+        "detections/hidden-content.js",
+        "detections/history-loop.js",
+        "detections/iframe-injection.js",
+        "detections/ip-geolocation-scare.js",
+        "detections/insecure-login.js",
+        "detections/keylogger.js",
+        "detections/llm-artifact.js",
+        "detections/lolbin.js",
+        "detections/lookalike.js",
+        "detections/macos-shell.js",
+        "detections/msedge-kiosk.js",
+        "detections/notification-spam.js",
+        "detections/obfuscation.js",
+        "detections/password-autocomplete.js",
+        "detections/phishing-impersonation.js",
+        "detections/powershell.js",
+        "detections/print-loop.js",
+        "detections/punycode-domain.js",
+        "detections/raw-ip-hosting.js",
+        "detections/scam-audio.js",
+        "detections/scam-multilang.js",
+        "detections/scam-phone.js",
+        "detections/search-hijacking.js",
+        "detections/seo-poisoning.js",
+        "detections/steganography.js",
+        "detections/suspicious-host.js",
+        "detections/suspicious-popup.js",
+        "detections/suspicious-redirect.js",
+        "detections/suspicious-terms.js",
+        "detections/suspicious-tld.js",
+        "detections/tech-support-scam.js",
+        "detections/urgency.js",
+        "detections/url-create-loop.js",
+        "detections/webdav.js",
+        "detections/window-opener.js",
+        "detections/visual-phishing.js",
+        "detections/winhttp.js",
+        "content/detector.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Nehboro",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "static_blocklist",
+        "enabled": true,
+        "path": "rules/static_rules.json"
+      }
+    ]
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "blocked/blocked.html",
+        "blocked/blocked.js",
+        "icons/report-flag.png",
+        "icons/icon48.png"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
