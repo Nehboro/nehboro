@@ -43,8 +43,8 @@ window.NehboroI18n = (function() {
       
       // IOC Feeds Tab
       "static_ioc_engine": "Static IOC Engine",
-      "ioc_info_box": "Focused on known scam and phishing domains, URLs, IPs, and ports - blocked <strong>before page load</strong> using community-maintained threat feeds.",
-      "ioc_note": "<strong>Note:</strong> Chrome caps the number of static IOC rules per extension, so this engine is a supplementary layer. The <strong>dynamic heuristic engine</strong> is the main feature.",
+      "ioc_info_box": "Focused on known scam and phishing domains, URLs, IPs, and ports - blocked <strong>before page load</strong> using community-maintained threat feeds via declarativeNetRequest rules.",
+      "ioc_note": "<strong>Note:</strong> Chrome caps the number of static IOC rules per extension, so this engine is a supplementary layer. The <strong>dynamic heuristic engine</strong> (Dynamic tab) is the main feature - it analyzes every page in real time and catches threats that aren't in any feed yet.",
       "default_feeds": "Default feeds",
       "custom_feeds": "Custom feeds",
       "no_custom_feeds": "No custom feeds added.",
@@ -75,8 +75,8 @@ window.NehboroI18n = (function() {
       
       // Dynamic Tab
       "dynamic_analysis_engine": "Dynamic Analysis Engine",
-      "dynamic_info_box": "Scans every page <strong>after load</strong> using 94+ heuristic detections: ClickFix, PowerShell payloads, phishing, and more.",
       "search_detections": "Search detections...",
+      "dynamic_info_box": "Scans every page <strong>after load</strong> using 94+ heuristic detections: ClickFix sequences, PowerShell payloads, fake CAPTCHAs, clipboard hijacks, credential harvesting, lookalike domains, visual brand impersonation, <strong>tech support scams</strong> (fake errors, dialog spam, phone scams, fake OS UI, data theft scare), <strong>multilingual detection</strong> (EN/FR/ES/DE/IT), Browser-in-Browser attacks, formjacking, and more. Adjust individual detection scores below.",
       "save_scores": "Save Scores",
       "reset_all": "Reset All",
       
@@ -136,6 +136,13 @@ window.NehboroI18n = (function() {
       "default": "default",
       "saved_count": "Saved! {count} custom score(s) active.",
       "api_key_required": "Enter an Anthropic API key.",
+      "api_key_placeholder": "sk-ant-...",
+      "model_custom_placeholder": "e.g. claude-sonnet-4-20250514",
+      "community_threat_intel": "Community Threat Intelligence",
+      "ai_engine": "AI",
+      "off": "OFF",
+      "english": "English",
+      "french": "Français",
       
       // Blocked Page
       "threat_blocked": "Threat Blocked",
@@ -205,8 +212,8 @@ window.NehboroI18n = (function() {
       
       // IOC Feeds Tab
       "static_ioc_engine": "Moteur IOC Statique",
-      "ioc_info_box": "Cible les domaines, URLs, IPs et ports connus pour le phishing et les arnaques - bloqués <strong>avant le chargement</strong> via des flux communautaires.",
-      "ioc_note": "<strong>Note :</strong> Chrome limite le nombre de règles statiques. Ce moteur est une couche supplémentaire. Le <strong>moteur heuristique dynamique</strong> est la fonction principale.",
+      "ioc_info_box": "Cible les domaines, URLs, IPs et ports connus pour le phishing et les arnaques - bloqués <strong>avant le chargement</strong> via des flux communautaires via les règles declarativeNetRequest.",
+      "ioc_note": "<strong>Note :</strong> Chrome limite le nombre de règles statiques. Ce moteur est une couche supplémentaire. Le <strong>moteur heuristique dynamique</strong> (onglet Heuristique) est la fonction principale - il analyse chaque page en temps réel.",
       "default_feeds": "Flux par défaut",
       "custom_feeds": "Flux personnalisés",
       "no_custom_feeds": "Aucun flux personnalisé ajouté.",
@@ -237,8 +244,8 @@ window.NehboroI18n = (function() {
       
       // Dynamic Tab
       "dynamic_analysis_engine": "Moteur d'Analyse Dynamique",
-      "dynamic_info_box": "Analyse chaque page <strong>après chargement</strong> via 94+ détections heuristiques : ClickFix, payloads PowerShell, phishing, etc.",
       "search_detections": "Rechercher des détections...",
+      "dynamic_info_box": "Analyse chaque page <strong>après chargement</strong> via 94+ détections heuristiques : séquences ClickFix, payloads PowerShell, faux CAPTCHAs, détournement de presse-papiers, vol d'identifiants, domaines similaires, usurpation visuelle de marque, <strong>arnaques au support technique</strong> (faux messages d'erreur, spam de dialogues, arnaques téléphoniques, faux UI système, chantage au vol de données), <strong>détection multilingue</strong> (EN/FR/ES/DE/IT), attaques Browser-in-Browser, formjacking, etc. Ajustez les scores ci-dessous.",
       "save_scores": "Enregistrer les scores",
       "reset_all": "Tout réinitialiser",
       
@@ -298,6 +305,13 @@ window.NehboroI18n = (function() {
       "default": "défaut",
       "saved_count": "Enregistré ! {count} score(s) personnalisé(s) actif(s).",
       "api_key_required": "Veuillez entrer une clé API Anthropic.",
+      "api_key_placeholder": "sk-ant-...",
+      "model_custom_placeholder": "ex: claude-sonnet-4-20250514",
+      "community_threat_intel": "Intelligence communautaire sur les menaces",
+      "ai_engine": "IA",
+      "off": "DÉSACTIVÉ",
+      "english": "English",
+      "french": "Français",
       
       // Blocked Page
       "threat_blocked": "Menace Bloquée",
@@ -340,9 +354,49 @@ window.NehboroI18n = (function() {
     }
   }
 
-  function t(key) {
+  function t(key, placeholders = {}) {
     if (!translations[currentLang]) return key;
-    return translations[currentLang][key] || key;
+    let val = translations[currentLang][key] || translations['en'][key] || key;
+    
+    // Simple placeholder replacement: {name} -> placeholders.name
+    Object.keys(placeholders).forEach(p => {
+      val = val.replace(new RegExp(`\\{${p}\\}`, 'g'), placeholders[p]);
+    });
+    return val;
+  }
+
+  function applyTranslations(container = document) {
+    const _t = t;
+    // Standard translations
+    container.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      const val = _t(key);
+      if (val !== key) {
+        // If it looks like HTML, use innerHTML, otherwise textContent
+        if (val.includes('<') && val.includes('>')) {
+          el.innerHTML = val;
+        } else {
+          if (el.childNodes.length <= 1) {
+            el.textContent = val;
+          } else {
+            // Respect existing child structure (e.g. icons) if only updating leading text
+            const textNode = [...el.childNodes].find(n => n.nodeType === 3);
+            if (textNode) textNode.textContent = val;
+          }
+        }
+      }
+    });
+
+    // Placeholders
+    container.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      const val = _t(key);
+      if (val !== key) el.placeholder = val;
+    });
+
+    // Language selector sync
+    const langSelect = container.querySelector('#select-lang');
+    if (langSelect) langSelect.value = currentLang;
   }
 
   function getLanguage() {
@@ -352,6 +406,7 @@ window.NehboroI18n = (function() {
   return {
     init,
     t,
+    applyTranslations,
     getLanguage,
     availableLanguages: ['en', 'fr']
   };
