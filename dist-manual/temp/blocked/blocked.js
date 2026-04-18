@@ -11,7 +11,23 @@
   const savedLang = storage.nehboro_lang || chrome.i18n.getUILanguage().split('-')[0];
   NehboroI18n.init(savedLang);
 
-  NehboroI18n.applyTranslations();
+  function applyTranslations() {
+    const t = NehboroI18n.t;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      const val = t(key);
+      if (val !== key) {
+        if (el.childNodes.length <= 1) {
+          el.textContent = val;
+        } else {
+          const textNode = [...el.childNodes].find(n => n.nodeType === 3);
+          if (textNode) textNode.textContent = val;
+        }
+      }
+    });
+  }
+
+  applyTranslations();
 
   const params     = new URLSearchParams(window.location.search);
   const blockedUrl = params.get('url') || params.get('blocked') || '';
