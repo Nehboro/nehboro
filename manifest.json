@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Nehboro",
   "version": "1.0.0",
-  "description": "Triple-engine threat protection: IOC feeds, 97 heuristic detections, and optional Claude AI scan every page for phishing, scams, ClickFix, and malware.",
+  "description": "Triple-engine threat protection: IOC feeds, heuristic detections, and optional Claude AI scan every page for phishing scams.",
   "author": "mthcht",
   "permissions": [
     "declarativeNetRequest",
