@@ -1,4 +1,4 @@
-name: Build and Check Extension
+name: Build and Release Extension
 
 on:
   push:
@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Needed to create releases
+      contents: write
 
     steps:
       - name: Checkout code
@@ -22,75 +22,120 @@ jobs:
         with:
           node-version: 24
 
-      - name: Lint Extension
-        run: |
-          npx web-ext lint --source-dir . --output-format json > lint-results.json || true
-          # Note: We use || true because we still want to package even if there are warnings, 
-          # but the packager will fail on errors.
-          cat lint-results.json
-
-      - name: Package Extension
-        run: |
-          npx web-ext build --source-dir . --artifacts-dir ./dist --overwrite-dest --ignore-files "lint-results.json" "README.md" --filename nehboro.zip
-          
-      - name: Create CRX
-        run: |
-          # Use secret if available, otherwise generate a temporary key
-          if [ -z "${{ secrets.CHROME_EXTENSION_PEM }}" ]; then
-            echo "WARNING: CHROME_EXTENSION_PEM secret not found. Generating a temporary key."
-            npx crx keygen .
-            mv key.pem ./dist/key.pem
-          else
-            echo "${{ secrets.CHROME_EXTENSION_PEM }}" > ./dist/key.pem
-          fi
-          # Unzip to a temporary directory to pack into CRX
-          unzip ./dist/nehboro.zip -d ./crx-temp
-          npx crx pack ./crx-temp -p ./dist/key.pem -o ./dist/nehboro.crx
-          
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: nehboro-extension
-          path: ./dist/nehboro.*
-
-      - name: Get version
+      - name: Get version from manifest
         id: version
         run: |
           VERSION=$(node -p "require('./manifest.json').version")
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
 
-      - name: Check if release exists
-        id: check_release
-        shell: bash
+      - name: Lint Extension
         run: |
-          if gh release view ${{ steps.version.outputs.tag }} >/dev/null 2>&1; then
-            echo "exists=true" >> $GITHUB_OUTPUT
+          npx web-ext lint --source-dir . --output-format json > lint-results.json || true
+          cat lint-results.json
+
+      - name: Build ZIP for sideloading (Load Unpacked)
+        run: |
+          mkdir -p dist
+
+          # Build a clean ZIP with only the extension files
+          zip -r dist/nehboro-${{ steps.version.outputs.VERSION }}.zip . \
+            -x ".git/*" \
+            -x ".github/*" \
+            -x "dist/*" \
+            -x "dist-manual/*" \
+            -x "scratch/*" \
+            -x "_metadata/*" \
+            -x "node_modules/*" \
+            -x "lint-results.json" \
+            -x "*.pem" \
+            -x ".gitignore" \
+            -x "{content,popup,blocked,utils,icons,rules}/*"
+
+          cp dist/nehboro-${{ steps.version.outputs.VERSION }}.zip dist/nehboro-latest.zip
+
+          echo "Built ZIP:"
+          ls -lh dist/
+
+      - name: Build CRX
+        run: |
+          # Use secret PEM if available, otherwise generate a temporary key
+          if [ -n "${{ secrets.CHROME_EXTENSION_PEM }}" ]; then
+            echo "${{ secrets.CHROME_EXTENSION_PEM }}" > ./dist/key.pem
           else
-            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "No CHROME_EXTENSION_PEM secret — generating temporary key"
+            npx crx keygen .
+            mv key.pem ./dist/key.pem
           fi
+
+          # Unzip into a clean folder and pack as CRX
+          mkdir -p crx-temp
+          unzip -o dist/nehboro-${{ steps.version.outputs.VERSION }}.zip -d crx-temp
+          npx crx pack crx-temp -p ./dist/key.pem -o ./dist/nehboro-${{ steps.version.outputs.VERSION }}.crx
+          cp dist/nehboro-${{ steps.version.outputs.VERSION }}.crx dist/nehboro-latest.crx
+
+          # Clean up key
+          rm -f ./dist/key.pem
+
+          echo "Built CRX:"
+          ls -lh dist/
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: nehboro-extension
+          path: |
+            dist/nehboro-*.zip
+            dist/nehboro-*.crx
+
+      # --- Release (only on push to main, not PRs) ---
+
+      - name: Create or update GitHub Release
+        if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          VERSION="${{ steps.version.outputs.VERSION }}"
 
-      - name: Create GitHub Release
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-        uses: softprops/action-gh-release@v3
-        with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: Release ${{ steps.version.outputs.tag }}
-          files: ./dist/*.crx
-          generate_release_notes: true
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Check if release exists
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG exists — updating assets..."
+
+            # Delete old ZIP assets to replace them
+            for asset in $(gh release view "$TAG" --json assets -q '.assets[].name' 2>/dev/null); do
+              echo "  Deleting old asset: $asset"
+              gh release delete-asset "$TAG" "$asset" --yes 2>/dev/null || true
+            done
+
+            # Upload new assets
+            gh release upload "$TAG" \
+              dist/nehboro-${VERSION}.zip \
+              dist/nehboro-latest.zip \
+              dist/nehboro-${VERSION}.crx \
+              dist/nehboro-latest.crx \
+              --clobber
+
+            echo "✓ Updated release $TAG"
+          else
+            echo "Creating new release $TAG..."
+            gh release create "$TAG" \
+              dist/nehboro-${VERSION}.zip \
+              dist/nehboro-latest.zip \
+              dist/nehboro-${VERSION}.crx \
+              dist/nehboro-latest.crx \
+              --title "Nehboro $TAG" \
+              --generate-notes
+
+            echo "✓ Created release $TAG"
+          fi
 
   publish-chrome:
     name: Publish to Chrome Web Store
     needs: build
-    # Only run if it's a push to main/master AND the version was just released (or if manually triggered)
     if: |
-      github.event_name == 'workflow_dispatch' || 
+      github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'))
     runs-on: ubuntu-latest
     steps:
@@ -101,11 +146,10 @@ jobs:
           path: ./dist
 
       - name: Upload to Chrome Web Store
-        # Note: This step will be skipped if secrets are not set
         if: env.HAS_SECRETS == 'true'
         uses: mnao305/chrome-extension-upload@v6.0.0
         with:
-          file-path: ./dist/*.zip
+          file-path: dist/nehboro-latest.zip
           extension-id: ${{ secrets.CHROME_EXTENSION_ID }}
           client-id: ${{ secrets.CHROME_CLIENT_ID }}
           client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
