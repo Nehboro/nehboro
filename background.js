@@ -488,7 +488,7 @@ chrome.webRequest.onBeforeRequest.addListener(
       // Overflow wildcard IOCs
       if (!blocked) {
         for (const { ioc } of (ov.wildcards || [])) {
-          const regex = new RegExp('^' + ioc.replace(/\./g, '\\.').replace(/\*/g, '.*').replace(/\?/g, '.') + '$', 'i');
+          const regex = new RegExp('^' + ioc.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.') + '$', 'i');
           if (regex.test(hostname) || regex.test(details.url)) {
             blocked = true;
             reason  = 'feed_wildcard_overflow';
