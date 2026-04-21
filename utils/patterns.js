@@ -61,7 +61,7 @@ var NW_PATTERNS = NW_PATTERNS || {
     /open\s+(?:spotlight|terminal\.app)/i,
     /spotlight\s+search/i,                                  // "Spotlight Search" (Image 3)
     /search\s+for\s+(?:the\s+)?(?:\*\*)?terminal(?:\*\*)?/i, // "Search for Terminal" (Image 3)
-    /type\s+terminal\s+(?:and\s+)?press\s+enter/i,
+    /type\s+terminal\s+(?:and\s+)?press\s+(?:enter|return)/i,
     /(?:ctrl|control)\s*\+\s*(?:alt|option)\s*\+\s*t\b/i,
     /select(?:ione)?\s+['"]?windows\s+powershell\s*\(?admin\)?['"]?/i, // "Seleccione 'Windows PowerShell (Admin)'" (Image 1)
     /choose\s+(?:terminal|powershell)/i,                    // "choose Terminal/PowerShell" (Image 7)
@@ -74,9 +74,13 @@ var NW_PATTERNS = NW_PATTERNS || {
   ],
   CF_EXECUTE: [
     /press\s+enter/i,
+    /press\s+return/i,
     /click\s+(?:ok|run|execute|yes|confirm)\b/i,
     /hit\s+enter/i,
+    /hit\s+return/i,
     /then\s+(?:press\s+)?enter/i,
+    /then\s+(?:press\s+)?return/i,
+    /press\s+(?:enter|return)\s*(?:↵|⏎)/i,
   ],
 
   // ── LOLBin patterns (all ClickGrab techniques) ────────────
