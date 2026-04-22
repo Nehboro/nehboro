@@ -155,10 +155,14 @@ Nehboro uses GitHub Actions for quality assurance and automated delivery:
 
 ## Install
 
-> [!IMPORTANT]
-> **Download the Latest Version**: You can always find the latest ready-to-use ZIP file in the [GitHub Releases](https://github.com/Nehboro/nehboro/releases).
+### Chrome WebStore
+
+**Now on the chrome webstore**: https://chromewebstore.google.com/detail/nehboro/ljgklnaofelbcnegjniagpmjknkmaiom
 
 ### Manual install (developer mode)
+
+> [!IMPORTANT]
+> **Download the Latest Version**: You can always find the latest ready-to-use ZIP file in the [GitHub Releases](https://github.com/Nehboro/nehboro/releases).
 
 ```bash
 # 1. Clone or download
